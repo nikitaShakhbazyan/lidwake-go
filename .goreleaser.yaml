@@ -1,0 +1,42 @@
+version: 2
+project_name: lidwake
+
+builds:
+  - id: lidwake
+    main: ./cmd/lidwake
+    binary: lidwake
+    env:
+      - CGO_ENABLED=1
+    goos: [darwin]
+    goarch: [arm64, amd64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w -X github.com/nikitaShakhbazyan/lidwake-go/internal/paths.Version={{ .Version }}
+    overrides:
+      - goos: darwin
+        goarch: amd64
+        env: [CGO_ENABLED=1, "CC=clang -arch x86_64", "CGO_CFLAGS=-mmacosx-version-min=14.0", "CGO_LDFLAGS=-mmacosx-version-min=14.0"]
+      - goos: darwin
+        goarch: arm64
+        env: [CGO_ENABLED=1, "CC=clang -arch arm64", "CGO_CFLAGS=-mmacosx-version-min=14.0", "CGO_LDFLAGS=-mmacosx-version-min=14.0"]
+
+universal_binaries:
+  - id: lidwake
+    replace: true
+    hooks:
+      # Sign here, on the Xcode runner: signing needs codesign_allocate from the developer tools,
+      # which a Mac running the curl installer may not have. `lidwake setup` sees the identifier and
+      # the hardened runtime are already right and doesn't re-sign.
+      post:
+        - codesign --force --sign - --options runtime --identifier io.github.nikitashakhbazyan.lidwake "{{ .Path }}"
+        - codesign --verify --strict "{{ .Path }}"
+
+archives:
+  - formats: [tar.gz]
+    files: [README.md, LICENSE]
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  disable: true

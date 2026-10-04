@@ -1,0 +1,21 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [macos-14, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: test -z "$(gofmt -l .)"
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: go build -o /tmp/lidwake ./cmd/lidwake && /tmp/lidwake version

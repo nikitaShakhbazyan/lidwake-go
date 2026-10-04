@@ -1,0 +1,6 @@
+.DS_Store
+/dist/
+/lidwake
+*.test
+*.out
+/bin/
