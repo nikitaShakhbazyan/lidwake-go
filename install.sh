@@ -21,10 +21,12 @@ fail() {
 
 version=${LIDWAKE_VERSION:-}
 if [ -z "$version" ]; then
-	version=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" |
-		sed -n 's/.*"tag_name": *"v\{0,1\}\([^"]*\)".*/\1/p' | head -n 1)
+	latest=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null) ||
+		fail "no release published yet at https://github.com/$REPO/releases — install with Go instead:
+  go install github.com/$REPO/cmd/lidwake@latest && \"\$(go env GOPATH)/bin/lidwake\" setup"
+	version=$(printf '%s\n' "$latest" | sed -n 's/.*"tag_name": *"v\{0,1\}\([^"]*\)".*/\1/p' | head -n 1)
 fi
-[ -n "$version" ] || fail "could not find the latest release"
+[ -n "$version" ] || fail "could not read the latest release version"
 
 archive="lidwake_${version}_darwin_all.tar.gz"
 base="https://github.com/$REPO/releases/download/v$version"
